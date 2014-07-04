@@ -1,4 +1,4 @@
-all: submodules clean_native clean build_native build
+all: submodules clean_native clean build_native build install
 
 submodules:
 	git submodule update --init --recursive
@@ -10,6 +10,10 @@ clean_native:
 	$(MAKE) -C aerospike-client-c clean
 
 build:
+	echo "Building package 'goaero'"
 	go build
 
 clean:
+
+install:
+	go install
