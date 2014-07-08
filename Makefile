@@ -1,19 +1,15 @@
-all: submodules clean_native clean build_native build install
+include $(GOROOT)/src/Make.inc
 
-submodules:
-	git submodule update --init --recursive
+TARG=github.com/miolini/goaero
+GOFILES=
+CGOFILES=client.go config.go
+CGO_OFILES=aerospike.o
 
-build_native:
-	CPATH=$(CPATH):/usr/include/lua5.1 $(MAKE) -C aerospike-client-c
+include $(GOROOT)/src/Make.pkg
 
-clean_native:
-	$(MAKE) -C aerospike-client-c clean
+format:
+	gofmt -w *.go
 
-build:
-	echo "Building package 'goaero'"
-	go build
-
-clean:
-
-install:
-	go install
+docs:
+	gomake clean
+	godoc ${TARG} > README.txt

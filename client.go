@@ -22,8 +22,9 @@
 
 package goaero
 
-// #cgo CFLAGS: -Iaerospike-client-c/target/Linux-x86_64/include
-// #cgo LDFLAGS: aerospike-client-c/target/Linux-x86_64/lib/libaerospike.a
+// #cgo CFLAGS: -I./aerospike-client-c/target/Linux-x86_64/include
+// #cgo LDFLAGS: ./aerospike-client-c/target/Linux-x86_64/lib/libaerospike.a
+// #cgo CGO_ENABLED: 1
 // #include <aerospike/aerospike.h>
 // #include <aerospike/as_log.h>
 import "C"
