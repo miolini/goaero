@@ -34,7 +34,12 @@ import (
 	"log"
 	"unsafe"
 	"fmt"
+	"runtime"
 )
+
+func as_error(e C.as_error) error {
+	return fmt.Errorf("err(%d) %s at [%s:%d]", e.code, C.GoString(&e.message[0]), C.GoString(e.file), e.line)
+}
 
 type Config struct {
 	as_config C.as_config
@@ -80,7 +85,7 @@ func NewAerospike(config *Config) (self *Aerospike) {
 func (self *Aerospike) Connect() (err error) {
 	var e C.as_error
 	if C.aerospike_connect(&self.aerospike, &e) != C.AEROSPIKE_OK {
-		return asErr(e)
+		return as_error(e)
 	}
 	return
 }
@@ -88,29 +93,44 @@ func (self *Aerospike) Connect() (err error) {
 func (self * Aerospike) Close() (err error) {
 	var e C.as_error
 	if C.aerospike_close(&self.aerospike, &e) != C.AEROSPIKE_OK {
-		return asErr(e)
+		return as_error(e)
 	}
 	C.aerospike_destroy(&self.aerospike)
 	return
 }
 
-func (self *Aerospike) Get() (err error) {
+func (self *Aerospike) Put(key * Key, rec * Record, policy_write * PolicyWrite) (err error) {
 	var e C.as_error
-	var as_record * C.as_record
-	var as_key C.as_key
-	result := C.aerospike_key_get(&self.aerospike, &e, nil, &as_key, &as_record)
-	if result != C.AEROSPIKE_OK {
-		err = asErr(e)
-	} else {
+	var policy * C.as_policy_write
+	if policy_write != nil {
+		policy = &policy_write.as_policy_write
+	}
+	if C.aerospike_key_put(&self.aerospike, &e, policy, &key.as_key, rec.p_as_record) != C.AEROSPIKE_OK {
+		return as_error(e)
 	}
 	return
 }
 
-func asErr(e C.as_error) error {
-	return fmt.Errorf("err(%d) %s at [%s:%d]", e.code, C.GoString(&e.message[0]), C.GoString(e.file), e.line)
+func (self *Aerospike) Get(key * Key, rec * Record, policy_read * PolicyRead) (err error) {
+	var e C.as_error
+	var policy * C.as_policy_read
+	if policy_read != nil {
+		policy = &policy_read.as_policy_read
+	}
+	if C.aerospike_key_get(&self.aerospike, &e, policy, &key.as_key, &rec.p_as_record) != C.AEROSPIKE_OK {
+		return as_error(e)
+	}
+	return
 }
 
-func (self *Aerospike) Set() {
+// TODO: policy methods
+type PolicyWrite struct {
+	as_policy_write C.as_policy_write
+}
+
+// TODO: policy methods
+type PolicyRead struct {
+	as_policy_read C.as_policy_read
 }
 
 type Key struct {
@@ -123,26 +143,78 @@ func NewKey(namespace string, set string, key string) (k * Key) {
 	k.n = C.CString(namespace)
 	k.s = C.CString(set)
 	k.k = C.CString(key)
-	C.as_key_init_str(&k.as_key, k.n, k.s, k.k)
+	C.as_key_init(&k.as_key, k.n, k.s, k.k)
+	runtime.SetFinalizer(k, DestroyKey)
 	return
 }
 
-func (self * Key) Destroy() {
-	C.free(unsafe.Pointer(self.n))
-	C.free(unsafe.Pointer(self.s))
-	C.free(unsafe.Pointer(self.k))
+func DestroyKey(key * Key) {
+	C.free(unsafe.Pointer(key.n))
+	C.free(unsafe.Pointer(key.s))
+	C.free(unsafe.Pointer(key.k))
 }
 
 type Record struct {
-	as_record C.as_record
+	p_as_record * C.as_record
+}
+
+// TODO: add list methods
+type List struct {
+	as_list C.as_list
+}
+
+// TODO: add map methods
+type Map struct {
+	as_map C.as_map
 }
 
 func NewRecord(num_bins uint16) (r * Record) {
 	r = &Record{}
-	C.as_record_init(&r.as_record, C.uint16_t(num_bins))
+	if num_bins > 0 {
+		r.p_as_record = C.as_record_new(C.uint16_t(num_bins))
+	}
+	runtime.SetFinalizer(r, DestroyRecord)
 	return
 }
 
-func (self * Record) Destroy() {
-	C.as_record_destroy(&self.as_record)
+func DestroyRecord(rec * Record) {
+	C.as_record_destroy(rec.p_as_record)
+}
+
+func (self * Record) SetInt64(name string, value int64) {
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+	C.as_record_set_int64(self.p_as_record, n, C.int64_t(value))
+}
+
+func (self * Record) SetString(name string, value string) {
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+	v := C.as_string_new(C.CString(value), true)
+	// value	The value of the bin. Must last for the lifetime of the record.
+	C.as_record_set_string(self.p_as_record, n, v)
+}
+
+func (self * Record) SetList(name string, value * List) {
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+	C.as_record_set_list(self.p_as_record, n, &value.as_list)
+}
+
+func (self * Record) SetMap(name string, value * Map) {
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+	C.as_record_set_map(self.p_as_record, n, &value.as_map)
+}
+
+func (self * Record) GetInt64(name string) int64 {
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+	return int64(C.as_record_get_int64(self.p_as_record, n, 0x7FFFFFFFFFFFFFFF))
+}
+
+func (self * Record) GetString(name string) string {
+	n := C.CString(name)
+	defer C.free(unsafe.Pointer(n))
+	return C.GoString(C.as_string_get(C.as_record_get_string(self.p_as_record, n)))
 }
