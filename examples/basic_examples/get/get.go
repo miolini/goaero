@@ -36,7 +36,7 @@ func main() {
 	err = as.Connect()
 	checkErr(err)
 	defer as.Close()
-	as.Get("lite", "testset", "testkey")
+	as.Get("lite", "testset", []byte("testkey"))
 }
 
 func checkErr(err error) {
