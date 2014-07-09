@@ -44,8 +44,8 @@ func main() {
 	checkErr(err)
 	defer as.Close()
 	key := goaero.NewKey(*ns, *set, "test-key")
-	record := goaero.NewRecord()
-	err = as.Put(key, record)
+	record := goaero.NewRecord(1)
+	err = as.Put(key, record, nil)
 	checkErr(err)
 }
 

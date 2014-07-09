@@ -30,59 +30,6 @@ package goaero
 // #include <aerospike/as_log.h>
 import "C"
 
-type Aerospike struct {
-	aerospike C.aerospike
-	config    *Config
-}
-
-func NewAerospike(config *Config) (self *Aerospike) {
-	self = new(Aerospike)
-	self.config = config
-	C.aerospike_init(&self.aerospike, self.config.getCStruct())
-	return
-}
-
-func (self *Aerospike) Connect() (err error) {
-	var e C.as_error
-	if C.aerospike_connect(&self.aerospike, &e) != C.AEROSPIKE_OK {
-		return as_error(e)
-	}
-	return
-}
-
-func (self *Aerospike) Close() (err error) {
-	var e C.as_error
-	if C.aerospike_close(&self.aerospike, &e) != C.AEROSPIKE_OK {
-		return as_error(e)
-	}
-	C.aerospike_destroy(&self.aerospike)
-	return
-}
-
-func (self *Aerospike) Put(key *Key, rec *Record, policy_write *PolicyWrite) (err error) {
-	var e C.as_error
-	var policy *C.as_policy_write
-	if policy_write != nil {
-		policy = &policy_write.as_policy_write
-	}
-	if C.aerospike_key_put(&self.aerospike, &e, policy, &key.as_key, rec.p_as_record) != C.AEROSPIKE_OK {
-		return as_error(e)
-	}
-	return
-}
-
-func (self *Aerospike) Get(key *Key, rec *Record, policy_read *PolicyRead) (err error) {
-	var e C.as_error
-	var policy *C.as_policy_read
-	if policy_read != nil {
-		policy = &policy_read.as_policy_read
-	}
-	if C.aerospike_key_get(&self.aerospike, &e, policy, &key.as_key, &rec.p_as_record) != C.AEROSPIKE_OK {
-		return as_error(e)
-	}
-	return
-}
-
 // TODO: policy methods
 type PolicyWrite struct {
 	as_policy_write C.as_policy_write
