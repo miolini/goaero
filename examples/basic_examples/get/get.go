@@ -24,13 +24,21 @@ package main
 
 import (
 	"log"
-	"github.com/miolini/goaero"
+	goaero "../../.."
 )
 
 func main() {
+	var err error
 	log.Printf("goaero example - get")
-	config := goaero.Config{}
-	config.AddHost("localhost")
+	config := goaero.NewConfig()
+	config.AddHost("localhost", 3000)
 	as := goaero.NewAerospike(config)
-	as.Connect()
+	err = as.Connect()
+	checkErr(err)
+}
+
+func checkErr(err error) {
+	if err != nil {
+		log.Fatalf("errro: %s", err)
+	}
 }
