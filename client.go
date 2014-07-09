@@ -25,6 +25,7 @@ package goaero
 // #cgo CFLAGS: -I/usr/local/include
 // #cgo LDFLAGS: /usr/local/lib/libaerospike.a -llua -lcrypto -lz
 // #include <aerospike/aerospike.h>
+// #include <aerospike/aerospike_key.h>
 // #include <aerospike/as_log.h>
 import "C"
 
@@ -86,7 +87,7 @@ func (self *Aerospike) Connect() (err error) {
 func (self * Aerospike) Close() (err error) {
 	var e C.as_error
 	if C.aerospike_close(&self.aerospike, &e) != C.AEROSPIKE_OK {
-		return asError(e)
+		return asErr(e)
 	}
 	C.aerospike_destroy(&self.aerospike)
 	return
@@ -94,17 +95,17 @@ func (self * Aerospike) Close() (err error) {
 
 func (self *Aerospike) Get() (err error) {
 	var e C.as_error
-	var as_record C.as_record
+	var as_record * C.as_record
 	var as_key C.as_key
 	result := C.aerospike_key_get(&self.aerospike, &e, nil, &as_key, &as_record)
 	if result != C.AEROSPIKE_OK {
 		err = asErr(e)
 	} else {
 	}
-	
+	return
 }
 
-func asErr(aserr C.as_error) err {
+func asErr(e C.as_error) error {
 	return fmt.Errorf("err(%d) %s at [%s:%d]", e.code, C.GoString(&e.message[0]), C.GoString(e.file), e.line)
 }
 
