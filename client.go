@@ -71,14 +71,42 @@ type Aerospike struct {
 func NewAerospike(config *Config) (self *Aerospike) {
 	self = new(Aerospike)
 	self.config = config
+	C.aerospike_init(&self.aerospike, self.config.getCStruct())
 	return
 }
 
 func (self *Aerospike) Connect() (err error) {
 	var e C.as_error
-	C.aerospike_init(&self.aerospike, self.config.getCStruct())
 	if C.aerospike_connect(&self.aerospike, &e) != C.AEROSPIKE_OK {
-		return fmt.Errorf("err(%d) %s at [%s:%d]", e.code, C.GoString(&e.message[0]), C.GoString(e.file), e.line)
+		return asErr(e)
 	}
 	return
+}
+
+func (self * Aerospike) Close() (err error) {
+	var e C.as_error
+	if C.aerospike_close(&self.aerospike, &e) != C.AEROSPIKE_OK {
+		return asError(e)
+	}
+	C.aerospike_destroy(&self.aerospike)
+	return
+}
+
+func (self *Aerospike) Get() (err error) {
+	var e C.as_error
+	var as_record C.as_record
+	var as_key C.as_key
+	result := C.aerospike_key_get(&self.aerospike, &e, nil, &as_key, &as_record)
+	if result != C.AEROSPIKE_OK {
+		err = asErr(e)
+	} else {
+	}
+	
+}
+
+func asErr(aserr C.as_error) err {
+	return fmt.Errorf("err(%d) %s at [%s:%d]", e.code, C.GoString(&e.message[0]), C.GoString(e.file), e.line)
+}
+
+func (self *Aerospike) Set() {
 }

@@ -35,6 +35,8 @@ func main() {
 	as := goaero.NewAerospike(config)
 	err = as.Connect()
 	checkErr(err)
+	defer as.Close()
+	as.Get("lite", "testset", "testkey")
 }
 
 func checkErr(err error) {
