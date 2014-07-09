@@ -25,9 +25,16 @@ package main
 import (
 	"log"
 	goaero "../../.."
+	"flag"
+)
+
+var (
+	ns = flag.String("ns", "test", "namespace")
+	set = flag.String("s", "test-set", "test set name")
 )
 
 func main() {
+	flag.Parse()
 	var err error
 	log.Printf("goaero example - get")
 	config := goaero.NewConfig()
@@ -36,7 +43,10 @@ func main() {
 	err = as.Connect()
 	checkErr(err)
 	defer as.Close()
-	as.Get("lite", "testset", []byte("testkey"))
+	key := goaero.Key{}
+	record := goaero.Record{}
+	as.Get(*ns, *set, key)
+	as.Put(*ns, *set, key, record)
 }
 
 func checkErr(err error) {
