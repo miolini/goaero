@@ -20,37 +20,39 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package main
+package goaero
+
+// #cgo CFLAGS: -I/usr/local/include
+// #cgo LDFLAGS: /usr/local/lib/libaerospike.a -llua -lcrypto -lz
+// #include <stdlib.h>
+// #include <aerospike/aerospike.h>
+// #include <aerospike/aerospike_key.h>
+// #include <aerospike/as_log.h>
+import "C"
 
 import (
-	"log"
-	goaero "../../.."
-	"flag"
+	"unsafe"
+	"runtime"
 )
 
-var (
-	ns = flag.String("ns", "test", "namespace")
-	set = flag.String("s", "test-set", "test set name")
-)
-
-func main() {
-	flag.Parse()
-	var err error
-	log.Printf("goaero example - get")
-	config := goaero.NewConfig()
-	config.AddHost("localhost", 3000)
-	as := goaero.NewAerospike(config)
-	err = as.Connect()
-	checkErr(err)
-	defer as.Close()
-	key := goaero.NewKey(*ns, *set, "test-key")
-	record := goaero.NewRecord()
-	err = as.Put(key, record)
-	checkErr(err)
+type Key struct {
+	as_key  C.as_key
+	n, s, k *C.char
 }
 
-func checkErr(err error) {
-	if err != nil {
-		log.Fatalf("errro: %s", err)
-	}
+func NewKey(namespace string, set string, key string) (k *Key) {
+	k = &Key{}
+	k.n = C.CString(namespace)
+	k.s = C.CString(set)
+	k.k = C.CString(key)
+	C.as_key_init(&k.as_key, k.n, k.s, k.k)
+	runtime.SetFinalizer(k, DestroyKey)
+	return
 }
+
+func DestroyKey(key *Key) {
+	C.free(unsafe.Pointer(key.n))
+	C.free(unsafe.Pointer(key.s))
+	C.free(unsafe.Pointer(key.k))
+}
+
