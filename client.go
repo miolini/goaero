@@ -92,4 +92,3 @@ type PolicyWrite struct {
 type PolicyRead struct {
 	as_policy_read C.as_policy_read
 }
-

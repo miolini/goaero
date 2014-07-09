@@ -31,8 +31,8 @@ package goaero
 import "C"
 
 import (
-	"unsafe"
 	"runtime"
+	"unsafe"
 )
 
 type Key struct {
@@ -55,4 +55,3 @@ func DestroyKey(key *Key) {
 	C.free(unsafe.Pointer(key.s))
 	C.free(unsafe.Pointer(key.k))
 }
-
