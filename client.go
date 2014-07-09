@@ -24,6 +24,7 @@ package goaero
 
 // #cgo CFLAGS: -I/usr/local/include
 // #cgo LDFLAGS: /usr/local/lib/libaerospike.a -llua -lcrypto -lz
+// #include <stdlib.h>
 // #include <aerospike/aerospike.h>
 // #include <aerospike/aerospike_key.h>
 // #include <aerospike/as_log.h>
@@ -110,4 +111,38 @@ func asErr(e C.as_error) error {
 }
 
 func (self *Aerospike) Set() {
+}
+
+type Key struct {
+	as_key C.as_key
+	n, s, k * C.char
+}
+
+func NewKey(namespace string, set string, key string) (k * Key) {
+	k = &Key{}
+	k.n = C.CString(namespace)
+	k.s = C.CString(set)
+	k.k = C.CString(key)
+	C.as_key_init_str(&k.as_key, k.n, k.s, k.k)
+	return
+}
+
+func (self * Key) Destroy() {
+	C.free(unsafe.Pointer(self.n))
+	C.free(unsafe.Pointer(self.s))
+	C.free(unsafe.Pointer(self.k))
+}
+
+type Record struct {
+	as_record C.as_record
+}
+
+func NewRecord(num_bins uint16) (r * Record) {
+	r = &Record{}
+	C.as_record_init(&r.as_record, C.uint16_t(num_bins))
+	return
+}
+
+func (self * Record) Destroy() {
+	C.as_record_destroy(&self.as_record)
 }
