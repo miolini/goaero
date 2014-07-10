@@ -31,7 +31,6 @@ package goaero
 import "C"
 
 import (
-	"runtime"
 	"unsafe"
 )
 
@@ -54,12 +53,13 @@ func NewRecord(num_bins uint16) (r *Record) {
 	if num_bins > 0 {
 		r.p_as_record = C.as_record_new(C.uint16_t(num_bins))
 	}
-	runtime.SetFinalizer(r, DestroyRecord)
 	return
 }
 
 func DestroyRecord(rec *Record) {
-	C.as_record_destroy(rec.p_as_record)
+	if rec.p_as_record != nil {
+		C.as_record_destroy(rec.p_as_record)
+	}
 }
 
 func (self *Record) SetInt64(name string, value int64) {

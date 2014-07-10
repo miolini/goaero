@@ -31,27 +31,53 @@ package goaero
 import "C"
 
 import (
-	"runtime"
 	"unsafe"
 )
 
 type Key struct {
-	as_key  C.as_key
-	n, s, k *C.char
+	as_key C.as_key
 }
 
 func NewKey(namespace string, set string, key string) (k *Key) {
 	k = &Key{}
-	k.n = C.CString(namespace)
-	k.s = C.CString(set)
-	k.k = C.CString(key)
-	C.as_key_init(&k.as_key, k.n, k.s, k.k)
-	runtime.SetFinalizer(k, DestroyKey)
+	n := C.CString(namespace)
+	defer C.free(unsafe.Pointer(n))
+	s := C.CString(set)
+	defer C.free(unsafe.Pointer(s))
+	C.as_key_init_strp(&k.as_key, n, s, C.CString(key), true)
+	return
+}
+
+func NewKeyInt64(namespace string, set string, key int64) (k *Key) {
+	k = &Key{}
+	n := C.CString(namespace)
+	defer C.free(unsafe.Pointer(n))
+	s := C.CString(set)
+	defer C.free(unsafe.Pointer(s))
+	C.as_key_init_int64(&k.as_key, n, s, C.int64_t(key))
+	return
+}
+
+func (self * Key) Reset(namespace string, set string, key string) {
+	DestroyKey(self)
+	n := C.CString(namespace)
+	defer C.free(unsafe.Pointer(n))
+	s := C.CString(set)
+	defer C.free(unsafe.Pointer(s))
+	C.as_key_init_strp(&self.as_key, n, s, C.CString(key), true)
+	return
+}
+
+func (self * Key) ResetInt64(namespace string, set string, key int64) {
+	DestroyKey(self)
+	n := C.CString(namespace)
+	defer C.free(unsafe.Pointer(n))
+	s := C.CString(set)
+	defer C.free(unsafe.Pointer(s))
+	C.as_key_init_int64(&self.as_key, n, s, C.int64_t(key))
 	return
 }
 
 func DestroyKey(key *Key) {
-	C.free(unsafe.Pointer(key.n))
-	C.free(unsafe.Pointer(key.s))
-	C.free(unsafe.Pointer(key.k))
+	C.as_key_destroy(&key.as_key)
 }
