@@ -30,12 +30,17 @@ package goaero
 // #include <aerospike/as_log.h>
 import "C"
 
-// TODO: policy methods
+// TODO: add policy methods
 type PolicyWrite struct {
 	as_policy_write C.as_policy_write
 }
 
-// TODO: policy methods
+// TODO: add policy methods
 type PolicyRead struct {
 	as_policy_read C.as_policy_read
+}
+
+// TODO: add policy methods
+type PolicyOperate struct {
+	as_policy_operate C.as_policy_operate
 }

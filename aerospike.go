@@ -82,3 +82,15 @@ func (self *Aerospike) Get(key *Key, rec *Record, policy_read *PolicyRead) (err 
 	}
 	return
 }
+
+func (self * Aerospike) KeyOperate(key * Key, ops * Operations, rec * Record, policy_operate * PolicyOperate) (err error) {
+	var e C.as_error
+	var policy *C.as_policy_operate
+	if policy_operate != nil {
+		policy = &policy_operate.as_policy_operate
+	}
+	if C.aerospike_key_operate(&self.aerospike, &e, policy, &key.as_key, &ops.as_ops, &rec.p_as_record) != C.AEROSPIKE_OK {
+		return as_error(e)
+	}
+	return
+}

@@ -32,6 +32,7 @@ import "C"
 
 import (
 	"unsafe"
+	"runtime"
 )
 
 type Record struct {
@@ -48,17 +49,35 @@ type Map struct {
 	as_map C.as_map
 }
 
+// destroy required
 func NewRecord(num_bins uint16) (r *Record) {
 	r = &Record{}
-	if num_bins > 0 {
-		r.p_as_record = C.as_record_new(C.uint16_t(num_bins))
-	}
+	r.init(num_bins)
 	return
+}
+
+// self destroys
+func NewRecordEx() (r * Record) {
+	r = &Record{}
+	runtime.SetFinalizer(r, DestroyRecord)
+	return
+}
+
+func (self * Record) init(num_bins uint16) {
+	if num_bins > 0 {
+		self.p_as_record = C.as_record_new(C.uint16_t(num_bins))
+	}
+}
+
+func (self * Record) Reset(num_bins uint16) {
+	DestroyRecord(self)
+	self.init(num_bins)
 }
 
 func DestroyRecord(rec *Record) {
 	if rec.p_as_record != nil {
 		C.as_record_destroy(rec.p_as_record)
+		rec.p_as_record = nil
 	}
 }
 
