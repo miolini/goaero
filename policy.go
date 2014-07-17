@@ -44,3 +44,8 @@ type PolicyRead struct {
 type PolicyOperate struct {
 	as_policy_operate C.as_policy_operate
 }
+
+// TODO: add policy methods
+type PolicyScan struct {
+	as_policy_scan C.as_policy_scan
+}

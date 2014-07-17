@@ -43,7 +43,7 @@ type Config struct {
 func NewConfig() (self *Config) {
 	self = new(Config)
 	C.as_config_init(&self.as_config)
-	self.as_config.policies.retry = C.AS_POLICY_RETRY_ONCE
+	//self.as_config.policies.retry = C.AS_POLICY_RETRY_ONCE
 	return
 }
 

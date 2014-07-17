@@ -27,8 +27,11 @@ package goaero
 // #include <stdlib.h>
 // #include <aerospike/aerospike.h>
 // #include <aerospike/aerospike_key.h>
+// #include <aerospike/aerospike_scan.h>
 // #include <aerospike/as_log.h>
 import "C"
+
+import "unsafe"
 
 type Aerospike struct {
 	aerospike C.aerospike
@@ -90,6 +93,19 @@ func (self * Aerospike) KeyOperate(key * Key, ops * Operations, rec * Record, po
 		policy = &policy_operate.as_policy_operate
 	}
 	if C.aerospike_key_operate(&self.aerospike, &e, policy, &key.as_key, &ops.as_ops, &rec.p_as_record) != C.AEROSPIKE_OK {
+		return as_error(e)
+	}
+	return
+}
+
+// callback: func (* C.as_val, unsafe.Pointer) bool
+func (self * Aerospike) ScanForeach(scan * Scan, callback * [0]byte, udata unsafe.Pointer, policy_scan * PolicyScan) (err error) {
+	var e C.as_error
+	var policy * C.as_policy_scan
+	if policy_scan != nil {
+		policy = &policy_scan.as_policy_scan
+	}
+	if C.aerospike_scan_foreach(&self.aerospike, &e, policy, &scan.as_scan, callback, udata) != C.AEROSPIKE_OK {
 		return as_error(e)
 	}
 	return

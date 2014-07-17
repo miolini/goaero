@@ -79,13 +79,11 @@ func (self * Key) initInt64(namespace string, set string, key int64) {
 func (self * Key) Reset(namespace string, set string, key string) {
 	DestroyKey(self)
 	self.init(namespace, set, key)
-	return
 }
 
 func (self * Key) ResetInt64(namespace string, set string, key int64) {
 	DestroyKey(self)
 	self.initInt64(namespace, set, key)
-	return
 }
 
 func DestroyKey(key *Key) {
