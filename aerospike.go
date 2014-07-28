@@ -57,8 +57,9 @@ func (self *Aerospike) Close() (err error) {
 	var e C.as_error
 	if C.aerospike_close(&self.aerospike, &e) != C.AEROSPIKE_OK {
 		return as_error(e)
+	} else {
+		C.aerospike_destroy(&self.aerospike)
 	}
-	C.aerospike_destroy(&self.aerospike)
 	return
 }
 
