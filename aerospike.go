@@ -34,20 +34,20 @@ import "C"
 import "unsafe"
 
 type Aerospike struct {
-	aerospike C.aerospike
-	config    *Config
+	aerospike * C.aerospike
+	config * Config
 }
 
 func NewAerospike(config *Config) (self *Aerospike) {
 	self = new(Aerospike)
 	self.config = config
-	C.aerospike_init(&self.aerospike, self.config.getCStruct())
+	self.aerospike = C.aerospike_new(&self.config.as_config)
 	return
 }
 
 func (self *Aerospike) Connect() (err error) {
 	var e C.as_error
-	if C.aerospike_connect(&self.aerospike, &e) != C.AEROSPIKE_OK {
+	if C.aerospike_connect(self.aerospike, &e) != C.AEROSPIKE_OK {
 		return as_error(e)
 	}
 	return
@@ -55,10 +55,14 @@ func (self *Aerospike) Connect() (err error) {
 
 func (self *Aerospike) Close() (err error) {
 	var e C.as_error
-	if C.aerospike_close(&self.aerospike, &e) != C.AEROSPIKE_OK {
+	if self.aerospike == nil {
+		return
+	}
+	if C.aerospike_close(self.aerospike, &e) != C.AEROSPIKE_OK {
 		return as_error(e)
 	} else {
-		C.aerospike_destroy(&self.aerospike)
+		C.aerospike_destroy(self.aerospike)
+		self.aerospike = nil
 	}
 	return
 }
@@ -69,7 +73,7 @@ func (self *Aerospike) Put(key *Key, rec *Record, policy_write *PolicyWrite) (er
 	if policy_write != nil {
 		policy = &policy_write.as_policy_write
 	}
-	if C.aerospike_key_put(&self.aerospike, &e, policy, &key.as_key, rec.p_as_record) != C.AEROSPIKE_OK {
+	if C.aerospike_key_put(self.aerospike, &e, policy, &key.as_key, rec.p_as_record) != C.AEROSPIKE_OK {
 		return as_error(e)
 	}
 	return
@@ -81,7 +85,7 @@ func (self *Aerospike) Get(key *Key, rec *Record, policy_read *PolicyRead) (err 
 	if policy_read != nil {
 		policy = &policy_read.as_policy_read
 	}
-	if C.aerospike_key_get(&self.aerospike, &e, policy, &key.as_key, &rec.p_as_record) != C.AEROSPIKE_OK {
+	if C.aerospike_key_get(self.aerospike, &e, policy, &key.as_key, &rec.p_as_record) != C.AEROSPIKE_OK {
 		return as_error(e)
 	}
 	return
@@ -93,7 +97,7 @@ func (self * Aerospike) KeyOperate(key * Key, ops * Operations, rec * Record, po
 	if policy_operate != nil {
 		policy = &policy_operate.as_policy_operate
 	}
-	if C.aerospike_key_operate(&self.aerospike, &e, policy, &key.as_key, &ops.as_ops, &rec.p_as_record) != C.AEROSPIKE_OK {
+	if C.aerospike_key_operate(self.aerospike, &e, policy, &key.as_key, &ops.as_ops, &rec.p_as_record) != C.AEROSPIKE_OK {
 		return as_error(e)
 	}
 	return
@@ -106,7 +110,7 @@ func (self * Aerospike) ScanForeach(scan * Scan, callback * [0]byte, udata unsaf
 	if policy_scan != nil {
 		policy = &policy_scan.as_policy_scan
 	}
-	if C.aerospike_scan_foreach(&self.aerospike, &e, policy, &scan.as_scan, callback, udata) != C.AEROSPIKE_OK {
+	if C.aerospike_scan_foreach(self.aerospike, &e, policy, &scan.as_scan, callback, udata) != C.AEROSPIKE_OK {
 		return as_error(e)
 	}
 	return

@@ -60,7 +60,3 @@ func (self *Config) AddHost(addr string, port uint16) {
 	self.lastHost++
 	C.free(unsafe.Pointer(cAddr))
 }
-
-func (self *Config) getCStruct() *C.as_config {
-	return &self.as_config
-}
