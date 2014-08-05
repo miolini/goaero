@@ -58,13 +58,15 @@ func (self *Aerospike) Close() (err error) {
 	if self.aerospike == nil {
 		return
 	}
-	if C.aerospike_close(self.aerospike, &e) != C.AEROSPIKE_OK {
-		return as_error(e)
-	} else {
-		C.aerospike_destroy(self.aerospike)
-		self.aerospike = nil
-	}
-	return
+	// if C.aerospike_close(self.aerospike, &e) != C.AEROSPIKE_OK {
+	// 	return as_error(e)
+	// } else {
+	// 	C.aerospike_destroy(self.aerospike)
+	// }
+	C.aerospike_close(self.aerospike, &e)
+	C.aerospike_destroy(self.aerospike)
+	self.aerospike = nil
+	return as_error(e)
 }
 
 func (self *Aerospike) Put(key *Key, rec *Record, policy_write *PolicyWrite) (err error) {
